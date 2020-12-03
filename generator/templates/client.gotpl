@@ -16,14 +16,12 @@ var hasBinaryTargets = {{ $hasBinaryTargets }}
 // Example:
 //
 //   client := db.NewClient()
-//   err := client.Connect()
-//   if err != nil {
+//   if err := client.Connect(); err != nil {
 //     handle(err)
 //   }
 //
 //   defer func() {
-//     err := client.Disconnect()
-//     if err != nil {
+//     if err := client.Disconnect(); err != nil {
 //       panic(fmt.Errorf("could not disconnect: %w", err))
 //     }
 //   }()
@@ -36,7 +34,8 @@ func NewClient() *PrismaClient {
 		c.{{ $model.Name.GoCase }} = {{ $model.Name.GoLowerCase }}Actions{client: c}
 	{{- end }}
 
-	c.Actions = &raw.Actions{Engine: c}
+	c.Raw = &raw.Raw{Engine: c}
+	c.TX = &transaction.TX{Engine: c}
 
 	return c
 }
@@ -50,7 +49,8 @@ func newMockClient(expectations *[]mock.Expectation) *PrismaClient {
 		c.{{ $model.Name.GoCase }} = {{ $model.Name.GoLowerCase }}Actions{client: c}
 	{{- end }}
 
-	c.Actions = &raw.Actions{Engine: c}
+	c.Raw = &raw.Raw{Engine: c}
+	c.TX = &transaction.TX{Engine: c}
 
 	return c
 }
@@ -62,7 +62,8 @@ type PrismaClient struct {
 	// while a mock engine would collect mocks to verify them later
 	engine.Engine
 
-	*raw.Actions
+	*raw.Raw
+	*transaction.TX
 
 	{{ range $model := $.DMMF.Datamodel.Models }}
 		// {{ $model.Name.GoCase }} provides access to CRUD methods.
@@ -75,14 +76,12 @@ type PrismaClient struct {
 //
 // Example:
 //
-//   err := client.Connect()
-//   if err != nil {
+//   if err := client.Connect(); err != nil {
 //     handle(err)
 //   }
 //
 //   defer func() {
-//     err := client.Disconnect()
-//     if err != nil {
+//     if err := client.Disconnect(); err != nil {
 //       panic(fmt.Errorf("could not disconnect: %w", err))
 //     }
 //   }()
@@ -99,8 +98,7 @@ func (c *PrismaClient) Connect() error {
 //   // after client.Connect()
 //
 //   defer func() {
-//     err := client.Disconnect()
-//     if err != nil {
+//     if err := client.Disconnect(); err != nil {
 //       panic(fmt.Errorf("could not disconnect: %w", err))
 //     }
 //   }()
